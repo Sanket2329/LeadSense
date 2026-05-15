@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/docs/" />
+  <Folder Name="/src/" />
+  <Folder Name="/src/Application/">
+    <Project Path="src/Application/LeaseSense.Application/LeaseSense.Application.csproj" Id="e5347bbf-b860-4bbc-bc21-2f703ac1f0e0" />
+  </Folder>
+  <Folder Name="/src/Domain/">
+    <Project Path="src/Domain/LeadSense.Domain/LeadSense.Domain.csproj" Id="bd8fd35d-2cce-40bb-8fac-a64f5f83a29d" />
+  </Folder>
+  <Folder Name="/src/Infrastructure/">
+    <Project Path="src/Infrastructure/LeadSense.Infrastructure.Repository/LeadSense.Infrastructure.Repository.csproj" Id="ec3823e5-88b3-4661-bffc-acc12b5cff9b" />
+  </Folder>
+  <Folder Name="/src/Web/">
+    <Project Path="src/Web/LeadSense.Api/LeadSense.Api.csproj" Id="ca745ff6-982c-4bc5-b07f-00abb41859bb" />
+  </Folder>
+  <Folder Name="/tests/" />
+</Solution>
