@@ -1,4 +1,5 @@
-﻿using LeadSense.Domain.Entities;
+﻿using LeadSense.Domain.Common;
+using LeadSense.Domain.Entities;
 using LeaseSense.Application.Interfaces;
 
 namespace LeaseSense.Application.UseCases.Leads.CreateLead;
@@ -12,7 +13,7 @@ public sealed class CreateLeadCommandHandler
         _leadRepository = leadRepository;
     }
 
-    public async Task<CreateLeadResponse> Handle(CreateLeadCommand request, CancellationToken cancellationToken)
+    public async Task<Result<CreateLeadResponse>> Handle(CreateLeadCommand request, CancellationToken cancellationToken)
     {
         var email = request.Email.Trim().ToLowerInvariant();
 
@@ -20,7 +21,7 @@ public sealed class CreateLeadCommandHandler
 
         if (leadAlreadyExists)
         {
-            throw new Exception("Lead already exists");
+            return Result<CreateLeadResponse>.Failure(Error.Create("Lead already exists"));
         }
 
         var lead = Lead.Create(
