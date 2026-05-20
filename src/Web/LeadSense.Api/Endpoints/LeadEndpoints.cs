@@ -18,9 +18,9 @@ public static class LeadEndpoints
                 CreateLeadCommandHandler handler,
                 CancellationToken cancellationToken) =>
             {
-                CreateLeadResponse response = await handler.Handle(request, cancellationToken);
+                var result = await handler.Handle(request, cancellationToken);
 
-                return Results.Created($"/api/leads/{response.Id}", response);
+                return Results.Created($"/api/leads/{result?.Value?.Id}", result);
             })
             .WithName("CreateLead")
             .WithSummary("Create lead")
