@@ -27,8 +27,8 @@ RUN dotnet publish src/Web/LeadSense.Api/LeadSense.Api.csproj \
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+# Create non-root user for security (Debian-based image uses groupadd/useradd)
+RUN groupadd --system appgroup && useradd --system --gid appgroup appuser
 USER appuser
 
 COPY --from=build /app/publish .
