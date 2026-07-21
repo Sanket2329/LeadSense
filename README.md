@@ -134,7 +134,7 @@ LeadSense/
 ### Prerequisites
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop) (recommended)
-- or: [.NET 10 SDK](https://dotnet.microsoft.com/download) + [Node.js 20+](https://nodejs.org) + PostgreSQL 16
+- or: [.NET 10 SDK](https://dotnet.microsoft.com/download) + [Node.js 22+](https://nodejs.org) + PostgreSQL 16
 
 ### Docker (recommended)
 
@@ -315,10 +315,10 @@ Content-Type: application/json
 
 ```bash
 # Run all tests
-dotnet test
+dotnet test tests/LeadSense.Tests/LeadSense.Tests.csproj --configuration Release
 
 # Run with coverage
-dotnet test --collect:"XPlat Code Coverage"
+dotnet test tests/LeadSense.Tests/LeadSense.Tests.csproj --configuration Release --collect:"XPlat Code Coverage"
 ```
 
 Test coverage includes:
