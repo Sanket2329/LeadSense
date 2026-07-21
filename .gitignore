@@ -360,3 +360,12 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# ── Secrets & environment files ───────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# dotnet user-secrets (stored in %APPDATA%\Microsoft\UserSecrets, never in repo)
+# appsettings files should never contain real secrets — use user-secrets or env vars
+appsettings.*.local.json

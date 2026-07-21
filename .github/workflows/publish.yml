@@ -1,0 +1,81 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"   # Triggered by tags like v1.0.0, v2.3.1
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION:   "22"
+  REGISTRY:       ghcr.io
+  API_IMAGE:      ghcr.io/${{ github.repository_owner }}/leadsense-api
+  FRONTEND_IMAGE: ghcr.io/${{ github.repository_owner }}/leadsense-frontend
+
+jobs:
+  publish:
+    name: Build · Test · Push images
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write   # needed to push to GHCR
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Backend ──────────────────────────────────────────────────────────────
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore & Build
+        run: |
+          dotnet restore LeadSenseApi.slnx
+          dotnet build LeadSenseApi.slnx --no-restore --configuration Release
+
+      - name: Run Tests
+        run: >
+          dotnet test tests/LeadSense.Tests/LeadSense.Tests.csproj
+          --no-build --configuration Release
+
+      # ── Docker ───────────────────────────────────────────────────────────────
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract version tag
+        id: meta
+        run: echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Push API image
+        uses: docker/build-push-action@v6
+        with:
+          context:   .
+          file:      src/Web/LeadSense.Api/Dockerfile
+          push:      true
+          tags: |
+            ${{ env.API_IMAGE }}:${{ steps.meta.outputs.VERSION }}
+            ${{ env.API_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+      - name: Push Frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context:   leadsense-frontend
+          file:      leadsense-frontend/Dockerfile
+          push:      true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.meta.outputs.VERSION }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max

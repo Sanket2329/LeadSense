@@ -1,0 +1,12 @@
+**/.git
+**/.vs
+**/.vscode
+**/node_modules
+**/dist
+**/.env
+**/bin
+**/obj
+**/*.user
+**/TestResults
+leadsense-frontend/node_modules
+leadsense-frontend/dist

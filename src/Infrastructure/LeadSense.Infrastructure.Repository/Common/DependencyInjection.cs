@@ -1,5 +1,5 @@
 ﻿using LeadSense.Infrastructure.Repository.Repositories;
-using LeaseSense.Application.Interfaces;
+using LeadSense.Application.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace LeadSense.Infrastructure.Repository.Common;

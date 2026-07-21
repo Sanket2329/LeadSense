@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  DOTNET_VERSION: "10.0.x"
+  NODE_VERSION:   "22"
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  backend:
+    name: Backend — Restore · Build · Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore LeadSenseApi.slnx
+
+      - name: Build
+        run: >
+          dotnet build LeadSenseApi.slnx
+          --no-restore
+          --configuration Release
+
+      - name: Test
+        run: >
+          dotnet test tests/LeadSense.Tests/LeadSense.Tests.csproj
+          --no-build
+          --configuration Release
+          --logger "trx;LogFileName=results.trx"
+          --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: "**/TestResults/**"
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  frontend:
+    name: Frontend — Install · Lint · Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: leadsense-frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: leadsense-frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ""
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: leadsense-frontend/dist
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  docker:
+    name: Docker — Build images
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    # Only run on pushes to main (not PRs) to avoid wasting build minutes
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context:   .
+          file:      src/Web/LeadSense.Api/Dockerfile
+          push:      false
+          tags:      leadsense/api:${{ github.sha }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max
+
+      - name: Build Frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context:   leadsense-frontend
+          file:      leadsense-frontend/Dockerfile
+          push:      false
+          tags:      leadsense/frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to:   type=gha,mode=max

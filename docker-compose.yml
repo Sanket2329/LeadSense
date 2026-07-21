@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+
+  # ─── PostgreSQL ─────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: leadsense_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       LeadSenseDb
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── .NET API ────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: src/Web/LeadSense.Api/Dockerfile
+    container_name: leadsense_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS:        http://+:8080
+      ConnectionStrings__DefaultConnection: >-
+        Host=db;Port=5432;Database=LeadSenseDb;
+        Username=postgres;Password=${POSTGRES_PASSWORD:-changeme}
+      Jwt__Key:          ${JWT_KEY:-CHANGE_THIS_SECRET_KEY_IN_PRODUCTION}
+      Jwt__Issuer:       LeadSense
+      Jwt__Audience:     LeadSenseUsers
+      Jwt__ExpiryMinutes: "60"
+      Resend__ApiKey:    ${RESEND_API_KEY:-}
+      Resend__FromEmail: ${RESEND_FROM_EMAIL:-noreply@leadsense.com}
+      Frontend__BaseUrl: ${FRONTEND_URL:-http://localhost}
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ─── React frontend ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: leadsense-frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""   # empty = nginx proxies /api → api:8080
+    container_name: leadsense_frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+
+volumes:
+  pgdata:
