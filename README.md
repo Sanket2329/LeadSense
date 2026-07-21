@@ -413,6 +413,5 @@ This project is licensed under the [MIT License](LICENSE).
 
 <div align="center">
 
-Built with ❤️ by **Amantya Technologies**
 
 </div>
